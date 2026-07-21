@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>KidCoins — لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--teal:#00C4B6;--teal2:#00A89C;--navy:#0D1B2A;--navy2:#0A1520;--navy3:#111F30;
+  --gold:#F5C518;--red:#FF5C6C;--green:#22C55E;--slate:#64748B;--border:rgba(255,255,255,.08);--card:rgba(255,255,255,.04);}
+html{font-size:16px;}
+body{font-family:'Cairo',sans-serif;background:var(--navy);color:#fff;min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;}
+[lang="en"] body{font-family:'Inter','Poppins',sans-serif;}
+[lang="en"] h1,[lang="en"] h2,[lang="en"] h3{font-family:'Poppins',sans-serif;}
+.hide{display:none!important;}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;height:60px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(13,27,42,.96);backdrop-filter:blur(18px);border-bottom:1px solid rgba(0,196,182,.16);}
+.tb-brand{display:flex;align-items:center;gap:9px;}
+.tb-logo{height:40px;width:auto;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,196,182,.3));}
+.tb-title{font-size:.95rem;font-weight:900;}
+.tb-title span{color:var(--gold);}
+.tb-actions{display:flex;align-items:center;gap:7px;}
+.icon-btn{width:36px;height:36px;border-radius:99px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.7);cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.icon-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
+#langBtn{font-family:'Poppins',sans-serif;font-weight:700;font-size:.72rem;color:var(--teal);border-color:rgba(0,196,182,.35);background:rgba(0,196,182,.08);}
+
+/* ── Layout ── */
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px;}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;color:rgba(255,255,255,.5);}
+.spinner{width:38px;height:38px;border:3px solid rgba(0,196,182,.2);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── Family header card ── */
+.fam-card{background:linear-gradient(145deg,rgba(0,196,182,.1),rgba(13,27,42,.6));border:1px solid rgba(0,196,182,.2);
+  border-radius:20px;padding:18px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.fam-name{font-size:1.15rem;font-weight:900;}
+.fam-meta{font-size:.72rem;color:rgba(255,255,255,.5);margin-top:2px;}
+.fam-code{display:inline-flex;align-items:center;gap:7px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.28);
+  border-radius:99px;padding:6px 13px;cursor:pointer;transition:all .2s;}
+.fam-code:hover{background:rgba(245,197,24,.18);}
+.fam-code b{font-family:'Poppins',monospace;letter-spacing:2px;color:var(--gold);font-size:.9rem;}
+.fam-code small{font-size:.6rem;color:rgba(255,255,255,.45);}
+
+/* ── Section ── */
+.sec{margin-bottom:22px;}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sec-head h2{font-size:.95rem;font-weight:800;display:flex;align-items:center;gap:7px;}
+.badge{font-size:.6rem;background:rgba(0,196,182,.14);color:var(--teal);border-radius:99px;padding:2px 8px;font-weight:700;}
+.badge.warn{background:rgba(245,197,24,.14);color:var(--gold);}
+
+/* ── Buttons ── */
+.btn{padding:9px 16px;border-radius:11px;border:none;cursor:pointer;font-family:'Cairo','Poppins',sans-serif;
+  font-size:.82rem;font-weight:800;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--navy);box-shadow:0 4px 14px rgba(0,196,182,.3);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,196,182,.42);}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:rgba(255,255,255,.75);}
+.btn-ghost:hover{background:rgba(255,255,255,.1);}
+.btn-sm{padding:6px 12px;font-size:.74rem;border-radius:9px;}
+.btn-green{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#4ADE80;}
+.btn-green:hover{background:rgba(34,197,94,.25);}
+.btn-red{background:rgba(255,92,108,.13);border:1px solid rgba(255,92,108,.32);color:#FF8593;}
+.btn-red:hover{background:rgba(255,92,108,.22);}
+
+/* ── Children grid ── */
+.kids{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.kid{background:var(--navy3);border:1px solid var(--border);border-radius:18px;padding:16px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;}
+.kid:hover{border-color:rgba(0,196,182,.35);transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3);}
+.kid-av{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:10px;}
+.kid-name{font-size:.9rem;font-weight:800;}
+.kid-user{font-size:.62rem;color:var(--slate);margin-bottom:8px;}
+.kid-bal{font-size:1.3rem;font-weight:900;color:var(--gold);display:flex;align-items:center;gap:4px;}
+.kid-bal small{font-size:.6rem;color:rgba(255,255,255,.4);font-weight:400;}
+.kid-add{background:rgba(0,196,182,.05);border:1.5px dashed rgba(0,196,182,.3);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;min-height:130px;color:var(--teal);}
+.kid-add:hover{background:rgba(0,196,182,.1);}
+.kid-add-ic{font-size:1.8rem;}
+.kid-add-t{font-size:.78rem;font-weight:800;}
+
+.empty{text-align:center;padding:30px 16px;background:rgba(0,196,182,.05);border:1.5px dashed rgba(0,196,182,.22);border-radius:16px;}
+.empty-ic{font-size:2.4rem;margin-bottom:8px;}
+.empty-t{font-weight:800;margin-bottom:4px;}
+.empty-s{font-size:.76rem;color:var(--slate);margin-bottom:14px;}
+
+/* ── List rows (tx / tasks / approvals) ── */
+.row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:7px;}
+.row-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;background:rgba(0,196,182,.1);}
+.row-main{flex:1;min-width:0;}
+.row-t{font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-s{font-size:.63rem;color:var(--slate);}
+.row-amt{font-size:.85rem;font-weight:900;flex-shrink:0;}
+.pos{color:#4ADE80;} .neg{color:#FF8593;}
+.row-actions{display:flex;gap:5px;flex-shrink:0;}
+
+/* ── Modal ── */
+.ov{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:18px;
+  background:rgba(6,12,20,.78);backdrop-filter:blur(6px);}
+.ov.show{display:flex;animation:fade .2s ease;}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:400px;background:linear-gradient(160deg,var(--navy3),rgba(13,27,42,.98));
+  border:1px solid rgba(0,196,182,.22);border-radius:22px;padding:24px 22px;max-height:90vh;overflow-y:auto;
+  animation:pop .3s cubic-bezier(.36,.07,.19,.97);}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-head h3{font-size:1.1rem;font-weight:900;}
+.x{width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);cursor:pointer;font-size:.85rem;}
+.x:hover{background:rgba(255,255,255,.12);color:#fff;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:.73rem;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:5px;}
+.field input,.field select{width:100%;padding:11px 13px;border-radius:11px;border:1.5px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:#fff;font-family:'Cairo','Poppins',sans-serif;font-size:.88rem;outline:none;transition:all .2s;}
+.field input:focus,.field select:focus{border-color:var(--teal);background:rgba(0,196,182,.06);}
+.pick-row{display:flex;gap:6px;flex-wrap:wrap;}
+.pick{width:40px;height:40px;border-radius:11px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.15rem;background:rgba(255,255,255,.05);transition:all .15s;}
+.pick.sel{border-color:var(--teal);transform:scale(1.08);}
+.color-pick{width:34px;height:34px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:all .15s;}
+.color-pick.sel{border-color:#fff;transform:scale(1.12);}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.quick button{flex:1;min-width:52px;padding:9px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.04);
+  color:#fff;font-family:'Cairo',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;transition:all .18s;}
+.quick button:hover{background:rgba(0,196,182,.12);border-color:rgba(0,196,182,.3);}
+.modal-err{font-size:.75rem;color:var(--red);min-height:18px;font-weight:700;text-align:center;margin:4px 0;}
+.modal-btns{display:flex;gap:8px;margin-top:6px;}
+.modal-btns .btn{flex:1;justify-content:center;padding:12px;}
+
+.seg{display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:12px;padding:4px;margin-bottom:14px;}
+.seg button{flex:1;padding:9px;border:none;background:none;border-radius:9px;cursor:pointer;font-family:'Cairo','Poppins',sans-serif;
+  font-weight:800;font-size:.8rem;color:rgba(255,255,255,.5);transition:all .18s;}
+.seg button.on{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--navy);}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);z-index:400;
+  background:var(--navy3);border:1px solid rgba(0,196,182,.4);border-radius:14px;padding:12px 20px;
+  font-size:.85rem;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.5);transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── Child view ── */
+.child-hero{background:linear-gradient(145deg,rgba(0,196,182,.14),rgba(245,197,24,.05));border:1px solid rgba(0,196,182,.25);
+  border-radius:22px;padding:26px 20px;text-align:center;margin-bottom:20px;}
+.child-hero .av{font-size:3rem;margin-bottom:8px;}
+.child-hero .nm{font-size:1.1rem;font-weight:800;}
+.child-hero .bal{font-size:2.4rem;font-weight:900;color:var(--gold);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+@media(max-width:520px){.wrap{padding:16px 12px 50px;}.kids{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-brand">
+    <img class="tb-logo" src="data:image/webp;base64,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" alt="KidCoins">
+    <div class="tb-title">Kid<span>Coins</span></div>
+  </div>
+  <div class="tb-actions">
+    <button class="icon-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    <button class="icon-btn hide" id="ownerBtn" onclick="location.href='admin.html'" title="لوحة المالك" style="border-color:rgba(155,89,182,.4);background:rgba(155,89,182,.12);color:#C589D8">👑</button>
+    <button class="icon-btn" onclick="doLogout()" title="خروج">⏻</button>
+  </div>
+</div>
+
+<div id="loading" class="loading"><div class="spinner"></div><div data-t="loading">جارٍ التحميل…</div></div>
+
+<!-- PARENT DASHBOARD -->
+<div class="wrap hide" id="parent-view">
+  <div class="fam-card">
+    <div>
+      <div class="fam-name" id="fam-name">—</div>
+      <div class="fam-meta" id="fam-meta"></div>
+    </div>
+    <div class="fam-code" onclick="copyCode()" title="انسخ رمز العائلة">
+      <div><small data-t="famCode">رمز العائلة</small><br><b id="fam-code">—</b></div>
+      <span>📋</span>
+    </div>
+  </div>
+
+  <!-- Pending approvals -->
+  <div class="sec hide" id="approvals-sec">
+    <div class="sec-head"><h2>⏳ <span data-t="approvals">طلبات تحتاج موافقتك</span> <span class="badge warn" id="appr-count">0</span></h2></div>
+    <div id="approvals-list"></div>
+  </div>
+
+  <!-- Children -->
+  <div class="sec">
+    <div class="sec-head">
+      <h2>🧒 <span data-t="children">الأبناء</span> <span class="badge" id="kids-count">0</span></h2>
+    </div>
+    <div id="kids-wrap"></div>
+  </div>
+
+  <!-- Store manager -->
+  <div class="sec">
+    <div class="sec-head">
+      <h2>🏪 <span data-t="store">المتجر</span> <span class="badge" id="store-count">0</span></h2>
+      <button class="btn btn-primary btn-sm" onclick="openAddItem()">➕ <span data-t="addItem">منتج</span></button>
+    </div>
+    <div id="store-wrap"></div>
+  </div>
+
+  <!-- Recent activity -->
+  <div class="sec">
+    <div class="sec-head"><h2>📊 <span data-t="activity">آخر العمليات</span></h2></div>
+    <div id="tx-list"></div>
+  </div>
+</div>
+
+<!-- CHILD VIEW -->
+<div class="wrap hide" id="child-view">
+  <div class="child-hero">
+    <div class="av" id="cv-av">🧒</div>
+    <div class="nm" id="cv-name">—</div>
+    <div class="bal" id="cv-bal">0 🪙</div>
+  </div>
+
+  <div class="seg" style="margin-bottom:16px">
+    <button id="cseg-home"  class="on" onclick="childTab('home')"  data-t="cvHome">🏠 الرئيسية</button>
+    <button id="cseg-store" onclick="childTab('store')" data-t="cvStore">🏪 المتجر</button>
+    <button id="cseg-goals" onclick="childTab('goals')" data-t="cvGoals">🎯 أهدافي</button>
+  </div>
+
+  <!-- child: home -->
+  <div id="cpane-home">
+    <div class="sec">
+      <div class="sec-head"><h2>📋 <span data-t="myTasks">مهامي</span></h2></div>
+      <div id="cv-tasks"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-head"><h2>📊 <span data-t="myActivity">عملياتي</span></h2></div>
+      <div id="cv-tx"></div>
+    </div>
+  </div>
+
+  <!-- child: store -->
+  <div id="cpane-store" class="hide">
+    <div class="sec">
+      <div class="sec-head"><h2>🏪 <span data-t="cvStoreH">متجر المكافآت</span></h2></div>
+      <div id="cv-store"></div>
+    </div>
+  </div>
+
+  <!-- child: goals -->
+  <div id="cpane-goals" class="hide">
+    <div class="sec">
+      <div class="sec-head"><h2>🎯 <span data-t="cvGoalsH">أهدافي الادخارية</span></h2></div>
+      <div id="cv-goals"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<!-- Add child -->
+<div class="ov" id="m-child">
+  <div class="modal">
+    <div class="modal-head"><h3 data-t="addChildT">👶 إضافة ابن</h3><button class="x" onclick="closeM('m-child')">✕</button></div>
+    <div class="field"><label data-t="childName">اسم الابن / البنت</label><input id="ac-name" maxlength="20" placeholder="فارس"></div>
+    <div class="field"><label data-t="username">اسم المستخدم (للدخول)</label><input id="ac-user" maxlength="20" placeholder="faris" style="direction:ltr;text-align:left"></div>
+    <div class="field"><label data-t="pin4">الرمز السري (4 أرقام)</label><input id="ac-pin" type="tel" maxlength="4" inputmode="numeric" placeholder="••••" style="direction:ltr;text-align:left"></div>
+    <div class="field"><label data-t="avatar">الأيقونة</label><div class="pick-row" id="ac-icons"></div></div>
+    <div class="field"><label data-t="color">اللون</label><div class="pick-row" id="ac-colors"></div></div>
+    <div class="modal-err" id="ac-err"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeM('m-child')" data-t="cancel">إلغاء</button>
+      <button class="btn btn-primary" id="ac-save" onclick="saveChild()" data-t="add">✅ إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Child actions (money/task) -->
+<div class="ov" id="m-kid">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mk-title">—</h3><button class="x" onclick="closeM('m-kid')">✕</button></div>
+    <div class="seg">
+      <button id="seg-give" class="on" onclick="mkTab('give')" data-t="give">➕ مكافأة</button>
+      <button id="seg-take" onclick="mkTab('take')" data-t="take">➖ خصم</button>
+      <button id="seg-task" onclick="mkTab('task')" data-t="task">📋 مهمة</button>
+      <button id="seg-goal" onclick="mkTab('goal')" data-t="goalTab">🎯 هدف</button>
+    </div>
+    <!-- give / take -->
+    <div id="mk-money">
+      <div class="quick" id="mk-quick"></div>
+      <div class="field"><label data-t="amount">المبلغ</label><input id="mk-amt" type="tel" inputmode="numeric" placeholder="0"></div>
+      <div class="field"><label data-t="reason">السبب</label><input id="mk-desc" maxlength="40" placeholder="—"></div>
+    </div>
+    <!-- task -->
+    <div id="mk-task" class="hide">
+      <div class="field"><label data-t="taskTitle">عنوان المهمة</label><input id="mk-ttl" maxlength="40" placeholder="ترتيب الغرفة"></div>
+      <div class="field"><label data-t="taskReward">المكافأة عند الإنجاز</label><input id="mk-trew" type="tel" inputmode="numeric" placeholder="50"></div>
+    </div>
+    <!-- goal -->
+    <div id="mk-goal" class="hide">
+      <div class="field"><label data-t="goalTitle">اسم الهدف</label><input id="mk-gttl" maxlength="40" placeholder="دراجة هوائية"></div>
+      <div class="field"><label data-t="goalIcon">الأيقونة</label><div class="pick-row" id="mk-gicons"></div></div>
+      <div class="field"><label data-t="goalTarget">المبلغ المستهدف</label><input id="mk-gtar" type="tel" inputmode="numeric" placeholder="1000"></div>
+    </div>
+    <div class="modal-err" id="mk-err"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeM('m-kid')" data-t="cancel">إلغاء</button>
+      <button class="btn btn-primary" id="mk-save" onclick="saveKidAction()" data-t="confirm">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add store item -->
+<div class="ov" id="m-item">
+  <div class="modal">
+    <div class="modal-head"><h3 data-t="addItemT">🎁 إضافة منتج للمتجر</h3><button class="x" onclick="closeM('m-item')">✕</button></div>
+    <div class="field"><label data-t="itemTitle">اسم المنتج</label><input id="it-title" maxlength="40" placeholder="لعبة جديدة"></div>
+    <div class="field"><label data-t="itemIcon">الأيقونة</label><div class="pick-row" id="it-icons"></div></div>
+    <div class="field"><label data-t="itemCost">السعر (بالعملات)</label><input id="it-cost" type="tel" inputmode="numeric" placeholder="100"></div>
+    <div class="modal-err" id="it-err"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeM('m-item')" data-t="cancel">إلغاء</button>
+      <button class="btn btn-primary" id="it-save" onclick="saveItem()" data-t="add">✅ إضافة</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/kidcoins-api.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  i18n
+// ══════════════════════════════════════════════════════
+const T={
+ ar:{dir:"rtl",loading:"جارٍ التحميل…",famCode:"رمز العائلة",approvals:"طلبات تحتاج موافقتك",children:"الأبناء",
+   activity:"آخر العمليات",myTasks:"مهامي",myActivity:"عملياتي",addChildT:"👶 إضافة ابن",childName:"اسم الابن / البنت",
+   username:"اسم المستخدم (للدخول)",pin4:"الرمز السري (4 أرقام)",avatar:"الأيقونة",color:"اللون",cancel:"إلغاء",add:"✅ إضافة",
+   give:"➕ مكافأة",take:"➖ خصم",task:"📋 مهمة",amount:"المبلغ",reason:"السبب",taskTitle:"عنوان المهمة",
+   taskReward:"المكافأة عند الإنجاز",confirm:"تأكيد",addKid:"إضافة ابن",noKids:"لم تُضف أبناء بعد",
+   noKidsSub:"أضف أبناءك لتبدأ رحلتهم المالية",addNow:"➕ إضافة ابن الآن",approve:"قبول",reject:"رفض",
+   copied:"✅ تم نسخ رمز العائلة",added:"✅ تمت الإضافة",done:"✅ تم",coin:"🪙",
+   store:"المتجر",addItem:"منتج",addItemT:"🎁 إضافة منتج للمتجر",itemTitle:"اسم المنتج",itemIcon:"الأيقونة",itemCost:"السعر (بالعملات)",
+   cvHome:"🏠 الرئيسية",cvStore:"🏪 المتجر",cvGoals:"🎯 أهدافي",cvStoreH:"متجر المكافآت",cvGoalsH:"أهدافي الادخارية",
+   goalTab:"🎯 هدف",goalTitle:"اسم الهدف",goalIcon:"الأيقونة",goalTarget:"المبلغ المستهدف"},
+ en:{dir:"ltr",loading:"Loading…",famCode:"Family Code",approvals:"Pending your approval",children:"Children",
+   activity:"Recent activity",myTasks:"My Tasks",myActivity:"My activity",addChildT:"👶 Add Child",childName:"Child name",
+   username:"Username (for login)",pin4:"PIN (4 digits)",avatar:"Avatar",color:"Color",cancel:"Cancel",add:"✅ Add",
+   give:"➕ Reward",take:"➖ Deduct",task:"📋 Task",amount:"Amount",reason:"Reason",taskTitle:"Task title",
+   taskReward:"Reward on completion",confirm:"Confirm",addKid:"Add child",noKids:"No children yet",
+   noKidsSub:"Add your children to start their money journey",addNow:"➕ Add a child now",approve:"Accept",reject:"Reject",
+   copied:"✅ Family code copied",added:"✅ Added",done:"✅ Done",coin:"🪙",
+   store:"Store",addItem:"Item",addItemT:"🎁 Add store item",itemTitle:"Item name",itemIcon:"Icon",itemCost:"Cost (coins)",
+   cvHome:"🏠 Home",cvStore:"🏪 Store",cvGoals:"🎯 Goals",cvStoreH:"Rewards store",cvGoalsH:"My savings goals",
+   goalTab:"🎯 Goal",goalTitle:"Goal name",goalIcon:"Icon",goalTarget:"Target amount"}
+};
+let lang=localStorage.getItem('kc_lang')||'ar';
+function t(k){return (T[lang][k]!==undefined?T[lang]:T.ar)[k];}
+function applyLang(l){lang=l;const o=T[l];
+  document.documentElement.dir=o.dir;document.documentElement.lang=l;
+  document.body.style.fontFamily=l==='en'?"'Inter','Poppins',sans-serif":"'Cairo',sans-serif";
+  document.querySelectorAll('[data-t]').forEach(e=>{if(o[e.dataset.t])e.textContent=o[e.dataset.t];});
+  document.getElementById('langBtn').textContent=l==='ar'?'EN':'ع';
+  localStorage.setItem('kc_lang',l);
+  if(state.family) renderParent(); if(state.child) renderChild();
+}
+function toggleLang(){applyLang(lang==='ar'?'en':'ar');}
+
+// ══════════════════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════════════════
+const state={family:null,children:[],tx:[],pending:[],store:[],purchases:[],child:null,_ctasks:[],_ctx:[],_cstore:[],_cgoals:[]};
+const ICONS=['🧒','🦁','🌟','🚀','🎯','⚡','🌺','🎨','🐯','🦄'];
+const COLORS=['#00C4B6','#FF6B6B','#A8E063','#9B59B6','#3498DB','#E67E22','#E91E63','#F5C518'];
+let ac_icon=ICONS[0],ac_color=COLORS[0],mk_tab='give',mk_kid=null;
+
+// ══════════════════════════════════════════════════════
+//  Helpers
+// ══════════════════════════════════════════════════════
+function el(id){return document.getElementById(id);}
+function show(id){el(id).classList.remove('hide');}
+function hide(id){el(id).classList.add('hide');}
+function openM(id){el(id).classList.add('show');}
+function closeM(id){el(id).classList.remove('show');}
+let toastT;
+function toast(msg){const x=el('toast');x.textContent=msg;x.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>x.classList.remove('show'),2600);}
+function fmt(n){return new Intl.NumberFormat(lang==='ar'?'ar-EG':'en-US').format(n);}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+const TX_LABEL={allowance:'مصروف',task_reward:'مكافأة مهمة',deposit:'إيداع',withdrawal:'سحب',purchase:'شراء',
+  gift:'هدية',transfer_in:'تحويل وارد',transfer_out:'تحويل صادر',penalty:'خصم',goal_deposit:'ادخار',goal_withdraw:'سحب ادخار',adjustment:'تعديل'};
+const TX_ICON={allowance:'💰',task_reward:'📋',deposit:'⬇️',withdrawal:'⬆️',purchase:'🛍️',gift:'🎁',penalty:'⚠️',adjustment:'⚙️'};
+
+// ══════════════════════════════════════════════════════
+//  Boot
+// ══════════════════════════════════════════════════════
+(async function boot(){
+  applyLang(lang);
+  if(!window.KC||!window.KIDCOINS_CONFIG||String(window.KIDCOINS_CONFIG.SUPABASE_URL).includes('YOUR-PROJECT')){
+    el('loading').innerHTML='<div style="text-align:center;max-width:340px"><div style="font-size:2.4rem;margin-bottom:10px">⚙️</div>'+
+      '<div style="font-weight:800;margin-bottom:6px">Supabase غير مُهيّأ</div>'+
+      '<div style="font-size:.8rem;color:#64748B">افتح <b>js/config.js</b> وأضف رابط ومفتاح مشروعك، ثم شغّل <b>supabase/schema.sql</b>.</div></div>';
+    return;
+  }
+  // Child session?
+  const childSess=KC.getChildSession();
+  const isChildRoute=(location.hash==='#child');
+  if(childSess && (isChildRoute || !(await KC.getSession()))){
+    return bootChild(childSess);
+  }
+  // Parent session?
+  const session=await KC.getSession();
+  if(!session){ location.replace('auth.html'); return; }
+  await bootParent();
+})();
+
+// ══════════════════════════════════════════════════════
+//  PARENT
+// ══════════════════════════════════════════════════════
+async function bootParent(){
+  try{
+    const fams=await KC.myFamilies();
+    if(!fams.length){ toast('لا توجد عائلة'); return; }
+    state.family=fams[0];
+    await refreshParent();
+    hide('loading'); show('parent-view');
+    // realtime
+    KC.subscribeFamily(state.family.id, ()=>refreshParent());
+  }catch(e){ console.error(e); el('loading').innerHTML='<div style="color:#FF8593">خطأ: '+esc(e.message)+'</div>'; }
+}
+async function refreshParent(){
+  const fid=state.family.id;
+  const [kids,tx,pending,store,purch]=await Promise.all([
+    KC.listChildren(fid),
+    KC.listTransactions(fid,{limit:20}),
+    KC.listTransactions(fid,{limit:50}),
+    KC.listStore(fid),
+    KC.listPurchases(fid,'pending')
+  ]);
+  state.children=kids;
+  state.tx=tx.filter(x=>x.status==='approved');
+  state.pending=pending.filter(x=>x.status==='pending');
+  state.store=store||[];
+  state.purchases=purch||[];
+  renderParent();
+}
+function renderParent(){
+  const f=state.family;
+  el('fam-name').textContent=f.name;
+  el('fam-meta').textContent=(lang==='ar'?'الإشراف: ':'Supervision: ')+f.supervision_level;
+  el('fam-code').textContent=f.family_code;
+  el('kids-count').textContent=fmt(state.children.length);
+
+  // approvals = pending transactions + pending purchase requests
+  const purch=state.purchases||[];
+  const totalPending=state.pending.length+purch.length;
+  if(totalPending){
+    show('approvals-sec');
+    el('appr-count').textContent=fmt(totalPending);
+    const txRows=state.pending.map(p=>{
+      const kid=state.children.find(k=>k.id===p.child_id);
+      return `<div class="row">
+        <div class="row-av">${TX_ICON[p.type]||'⏳'}</div>
+        <div class="row-main"><div class="row-t">${esc(p.description||TX_LABEL[p.type]||p.type)}</div>
+          <div class="row-s">${kid?esc(kid.name):''}</div></div>
+        <div class="row-amt ${p.amount>=0?'pos':'neg'}">${p.amount>=0?'+':''}${fmt(p.amount)}</div>
+        <div class="row-actions">
+          <button class="btn btn-sm btn-green" onclick="decide('${p.id}',true)">✓</button>
+          <button class="btn btn-sm btn-red" onclick="decide('${p.id}',false)">✕</button>
+        </div></div>`;
+    }).join('');
+    const purchRows=purch.map(p=>{
+      const kid=state.children.find(k=>k.id===p.child_id);
+      return `<div class="row">
+        <div class="row-av">🛍️</div>
+        <div class="row-main"><div class="row-t">${esc(p.title)}</div>
+          <div class="row-s">${kid?esc(kid.name):''} · ${lang==='ar'?'طلب شراء':'purchase'}</div></div>
+        <div class="row-amt neg">-${fmt(p.cost)}</div>
+        <div class="row-actions">
+          <button class="btn btn-sm btn-green" onclick="decidePurchase('${p.id}',true)">✓</button>
+          <button class="btn btn-sm btn-red" onclick="decidePurchase('${p.id}',false)">✕</button>
+        </div></div>`;
+    }).join('');
+    el('approvals-list').innerHTML=purchRows+txRows;
+  } else hide('approvals-sec');
+
+  // store
+  const sw=el('store-wrap'); const store=state.store||[];
+  el('store-count').textContent=fmt(store.length);
+  sw.innerHTML=store.length ? store.map(s=>`
+      <div class="row">
+        <div class="row-av">${s.icon||'🎁'}</div>
+        <div class="row-main"><div class="row-t">${esc(s.title)}</div></div>
+        <div class="row-amt" style="color:var(--gold)">${fmt(s.cost)} 🪙</div>
+        <div class="row-actions"><button class="btn btn-sm btn-red" onclick="removeItem('${s.id}')">🗑️</button></div>
+      </div>`).join('')
+    : `<div class="row" style="justify-content:center;color:#64748B">${lang==='ar'?'لا توجد منتجات — أضف أول منتج':'No items yet'}</div>`;
+
+  // children
+  const wrap=el('kids-wrap');
+  if(!state.children.length){
+    wrap.innerHTML=`<div class="empty"><div class="empty-ic">👶</div>
+      <div class="empty-t">${t('noKids')}</div><div class="empty-s">${t('noKidsSub')}</div>
+      <button class="btn btn-primary" onclick="openAddChild()">${t('addNow')}</button></div>`;
+  } else {
+    wrap.innerHTML='<div class="kids">'+state.children.map(k=>`
+      <div class="kid" onclick="openKid('${k.id}')">
+        <div class="kid-av" style="background:${k.color}22;color:${k.color}">${k.avatar}</div>
+        <div class="kid-name">${esc(k.name)}</div>
+        <div class="kid-user">@${esc(k.username)}</div>
+        <div class="kid-bal">${fmt(k.balance)} <small>${t('coin')}</small></div>
+      </div>`).join('')+
+      `<div class="kid kid-add" onclick="openAddChild()">
+        <div class="kid-add-ic">➕</div><div class="kid-add-t">${t('addKid')}</div></div></div>`;
+  }
+
+  // recent tx
+  const list=el('tx-list');
+  if(!state.tx.length){ list.innerHTML=`<div class="row" style="justify-content:center;color:#64748B">—</div>`; }
+  else list.innerHTML=state.tx.slice(0,12).map(x=>{
+    const kid=state.children.find(k=>k.id===x.child_id);
+    const d=new Date(x.created_at).toLocaleDateString(lang==='ar'?'ar-EG':'en-US',{month:'short',day:'numeric'});
+    return `<div class="row"><div class="row-av">${TX_ICON[x.type]||'💠'}</div>
+      <div class="row-main"><div class="row-t">${esc(x.description||TX_LABEL[x.type]||x.type)}</div>
+        <div class="row-s">${kid?esc(kid.name):''} · ${d}</div></div>
+      <div class="row-amt ${x.amount>=0?'pos':'neg'}">${x.amount>=0?'+':''}${fmt(x.amount)}</div></div>`;
+  }).join('');
+}
+
+async function decide(txId,ok){
+  try{ await KC.decideTransaction(txId,ok); toast(t('done')); await refreshParent(); }
+  catch(e){ toast('⚠️ '+e.message); }
+}
+
+// ── Store: approve/reject a purchase request ──
+async function decidePurchase(pid,ok){
+  const p=(state.purchases||[]).find(x=>x.id===pid); if(!p)return;
+  try{ await KC.decidePurchase(p,ok); toast(t('done')); await refreshParent(); }
+  catch(e){ toast('⚠️ '+e.message); }
+}
+// ── Store: add/remove items ──
+const ITEM_ICONS=['🎁','🎮','📱','🍫','🎡','📖','🍔','🚲','⚽','🎨','🧸','🎧'];
+let it_icon=ITEM_ICONS[0];
+function openAddItem(){
+  el('it-title').value='';el('it-cost').value='';el('it-err').textContent='';it_icon=ITEM_ICONS[0];
+  el('it-icons').innerHTML=ITEM_ICONS.map((ic,i)=>`<div class="pick ${i===0?'sel':''}" data-ic="${ic}" onclick="pickItemIcon(this)">${ic}</div>`).join('');
+  openM('m-item');setTimeout(()=>el('it-title').focus(),150);
+}
+function pickItemIcon(e){document.querySelectorAll('#it-icons .pick').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');it_icon=e.dataset.ic;}
+async function saveItem(){
+  const title=el('it-title').value.trim();const cost=parseInt(el('it-cost').value)||0;
+  const err=el('it-err');
+  if(!title){err.textContent=lang==='ar'?'أدخل اسم المنتج':'Enter a title';return;}
+  if(cost<=0){err.textContent=lang==='ar'?'أدخل سعراً صحيحاً':'Enter a valid cost';return;}
+  const btn=el('it-save');btn.disabled=true;
+  try{ await KC.createStoreItem({familyId:state.family.id,title,icon:it_icon,cost});
+    closeM('m-item');toast(t('added'));await refreshParent();
+  }catch(e){ err.textContent=e.message; }finally{ btn.disabled=false; }
+}
+async function removeItem(id){
+  try{ await KC.removeStoreItem(id); toast(t('done')); await refreshParent(); }
+  catch(e){ toast('⚠️ '+e.message); }
+}
+
+// ── Add child modal ──
+function openAddChild(){
+  el('ac-name').value='';el('ac-user').value='';el('ac-pin').value='';el('ac-err').textContent='';
+  ac_icon=ICONS[0];ac_color=COLORS[0];
+  el('ac-icons').innerHTML=ICONS.map((ic,i)=>`<div class="pick ${i===0?'sel':''}" data-ic="${ic}" onclick="pickIcon(this)">${ic}</div>`).join('');
+  el('ac-colors').innerHTML=COLORS.map((c,i)=>`<div class="color-pick ${i===0?'sel':''}" data-c="${c}" style="background:${c}" onclick="pickColor(this)"></div>`).join('');
+  openM('m-child');setTimeout(()=>el('ac-name').focus(),150);
+}
+function pickIcon(e){document.querySelectorAll('#ac-icons .pick').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');ac_icon=e.dataset.ic;}
+function pickColor(e){document.querySelectorAll('#ac-colors .color-pick').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');ac_color=e.dataset.c;}
+async function saveChild(){
+  const name=el('ac-name').value.trim(),user=el('ac-user').value.trim().toLowerCase(),pin=el('ac-pin').value.trim();
+  const err=el('ac-err');
+  if(!name){err.textContent=lang==='ar'?'أدخل الاسم':'Enter name';return;}
+  if(!user){err.textContent=lang==='ar'?'أدخل اسم المستخدم':'Enter username';return;}
+  if(!/^\d{4}$/.test(pin)){err.textContent=lang==='ar'?'الرمز 4 أرقام':'PIN must be 4 digits';return;}
+  const btn=el('ac-save');btn.disabled=true;
+  try{
+    await KC.createChild({familyId:state.family.id,name,username:user,pin,avatar:ac_icon,color:ac_color});
+    closeM('m-child');toast(t('added'));await refreshParent();
+  }catch(e){ err.textContent=/duplicate|unique/i.test(e.message)?(lang==='ar'?'اسم المستخدم مستخدم':'Username taken'):e.message; }
+  finally{ btn.disabled=false; }
+}
+
+// ── Kid actions modal ──
+function openKid(id){
+  mk_kid=state.children.find(k=>k.id===id);if(!mk_kid)return;
+  el('mk-title').textContent=mk_kid.avatar+' '+mk_kid.name;
+  mkTab('give');el('mk-amt').value='';el('mk-desc').value='';el('mk-ttl').value='';el('mk-trew').value='';el('mk-err').textContent='';
+  el('mk-gttl').value='';el('mk-gtar').value='';
+  mk_gicon=GOAL_ICONS[0];
+  el('mk-gicons').innerHTML=GOAL_ICONS.map((ic,i)=>`<div class="pick ${i===0?'sel':''}" data-ic="${ic}" onclick="pickGoalIcon(this)">${ic}</div>`).join('');
+  el('mk-quick').innerHTML=[10,25,50,100].map(v=>`<button onclick="el('mk-amt').value=${v}">${v}</button>`).join('');
+  openM('m-kid');
+}
+const GOAL_ICONS=['🎯','🚲','🎮','📱','🎨','⚽','🧸','📚','🎧','🛹','🏀','🎁'];
+let mk_gicon=GOAL_ICONS[0];
+function pickGoalIcon(e){document.querySelectorAll('#mk-gicons .pick').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');mk_gicon=e.dataset.ic;}
+function mkTab(tab){
+  mk_tab=tab;
+  ['give','take','task','goal'].forEach(x=>el('seg-'+x).classList.toggle('on',x===tab));
+  el('mk-money').classList.toggle('hide',tab==='task'||tab==='goal');
+  el('mk-task').classList.toggle('hide',tab!=='task');
+  el('mk-goal').classList.toggle('hide',tab!=='goal');
+}
+async function saveKidAction(){
+  const err=el('mk-err');const btn=el('mk-save');
+  try{
+    btn.disabled=true;
+    if(mk_tab==='task'){
+      const ttl=el('mk-ttl').value.trim();const rew=parseInt(el('mk-trew').value)||0;
+      if(!ttl){err.textContent=lang==='ar'?'أدخل عنوان المهمة':'Enter task title';btn.disabled=false;return;}
+      await KC.createTask({family_id:state.family.id,child_id:mk_kid.id,title:ttl,reward:rew,status:'assigned'});
+      toast(lang==='ar'?'✅ أُضيفت المهمة':'✅ Task added');
+    }else if(mk_tab==='goal'){
+      const ttl=el('mk-gttl').value.trim();const tar=parseInt(el('mk-gtar').value)||0;
+      if(!ttl){err.textContent=lang==='ar'?'أدخل اسم الهدف':'Enter goal name';btn.disabled=false;return;}
+      if(tar<=0){err.textContent=lang==='ar'?'أدخل مبلغاً مستهدفاً':'Enter a target';btn.disabled=false;return;}
+      await KC.createGoal({family_id:state.family.id,child_id:mk_kid.id,title:ttl,icon:mk_gicon,target_amount:tar,current_amount:0});
+      toast(lang==='ar'?'🎯 أُضيف الهدف':'🎯 Goal added');
+    }else{
+      let amt=parseInt(el('mk-amt').value)||0;
+      if(amt<=0){err.textContent=lang==='ar'?'أدخل مبلغاً':'Enter an amount';btn.disabled=false;return;}
+      if(mk_tab==='take')amt=-amt;
+      await KC.addTransaction({familyId:state.family.id,childId:mk_kid.id,
+        type:mk_tab==='give'?'gift':'penalty',amount:amt,description:el('mk-desc').value.trim()||(mk_tab==='give'?'مكافأة':'خصم'),status:'approved'});
+      toast(t('done'));
+    }
+    closeM('m-kid');await refreshParent();
+  }catch(e){ err.textContent=e.message; }
+  finally{ btn.disabled=false; }
+}
+
+// ══════════════════════════════════════════════════════
+//  CHILD VIEW
+// ══════════════════════════════════════════════════════
+async function bootChild(sess){
+  state.child=sess;
+  await refreshChild();
+  renderChild();
+  hide('loading');show('child-view');
+}
+async function refreshChild(){
+  const c=state.child; if(!c)return;
+  try{
+    const [fresh,tasks,tx,store,goals]=await Promise.all([
+      KC.childRefresh(c.child_id),
+      KC.childTasks(c.child_id),
+      KC.childTransactions(c.child_id,15),
+      KC.childStore(c.family_id),
+      KC.childGoals(c.child_id)
+    ]);
+    if(fresh){ c.balance=fresh.balance; c.level=fresh.level; }
+    state._ctasks=tasks||[]; state._ctx=tx||[];
+    state._cstore=store||[]; state._cgoals=goals||[];
+  }catch(e){console.warn(e);}
+}
+let childCurTab='home';
+function childTab(tab){
+  childCurTab=tab;
+  ['home','store','goals'].forEach(x=>{
+    el('cseg-'+x).classList.toggle('on',x===tab);
+    el('cpane-'+x).classList.toggle('hide',x!==tab);
+  });
+}
+function renderChild(){
+  const c=state.child;if(!c)return;
+  el('cv-av').textContent=c.avatar||'🧒';
+  el('cv-name').textContent=c.name;
+  el('cv-bal').innerHTML=fmt(c.balance)+' 🪙';
+
+  // tasks
+  const tw=el('cv-tasks');const tasks=(state._ctasks||[]).filter(x=>x.status!=='approved');
+  tw.innerHTML=tasks.length?tasks.map(x=>`<div class="row"><div class="row-av">${x.icon||'📋'}</div>
+    <div class="row-main"><div class="row-t">${esc(x.title)}</div><div class="row-s">${lang==='ar'?'مكافأة':'reward'}</div></div>
+    <div class="row-amt pos">+${fmt(x.reward)}</div></div>`).join('')
+    :`<div class="row" style="justify-content:center;color:#64748B">—</div>`;
+
+  // activity
+  const xw=el('cv-tx');
+  xw.innerHTML=(state._ctx||[]).length?state._ctx.map(x=>{
+    const d=new Date(x.created_at).toLocaleDateString(lang==='ar'?'ar-EG':'en-US',{month:'short',day:'numeric'});
+    return `<div class="row"><div class="row-av">${TX_ICON[x.type]||'💠'}</div>
+      <div class="row-main"><div class="row-t">${esc(x.description||x.type)}</div><div class="row-s">${d}</div></div>
+      <div class="row-amt ${x.amount>=0?'pos':'neg'}">${x.amount>=0?'+':''}${fmt(x.amount)}</div></div>`;
+  }).join(''):`<div class="row" style="justify-content:center;color:#64748B">—</div>`;
+
+  // store (child can afford → highlighted; else disabled)
+  const sw=el('cv-store');const store=state._cstore||[];
+  sw.innerHTML=store.length?store.map(s=>{
+    const can=c.balance>=s.cost;
+    return `<div class="row">
+      <div class="row-av">${s.icon||'🎁'}</div>
+      <div class="row-main"><div class="row-t">${esc(s.title)}</div>
+        <div class="row-s">${can?(lang==='ar'?'يمكنك طلبه':'you can request'):(lang==='ar'?'رصيد غير كافٍ':'not enough')}</div></div>
+      <div class="row-amt" style="color:var(--gold)">${fmt(s.cost)} 🪙</div>
+      <div class="row-actions">
+        <button class="btn btn-sm ${can?'btn-green':'btn-ghost'}" ${can?'':'disabled'} onclick="reqPurchase('${s.id}','${esc(s.title)}')">🛒</button>
+      </div></div>`;
+  }).join(''):`<div class="row" style="justify-content:center;color:#64748B">${lang==='ar'?'المتجر فارغ':'store is empty'}</div>`;
+
+  // goals with progress bars
+  const gw=el('cv-goals');const goals=state._cgoals||[];
+  gw.innerHTML=goals.length?goals.map(g=>{
+    const pct=Math.min(100,Math.round(g.current_amount/g.target_amount*100));
+    const done=g.status==='completed'||pct>=100;
+    return `<div class="row" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="row-av">${g.icon||'🎯'}</div>
+        <div class="row-main"><div class="row-t">${esc(g.title)} ${done?'✅':''}</div>
+          <div class="row-s">${fmt(g.current_amount)} / ${fmt(g.target_amount)} 🪙 · ${pct}%</div></div>
+        ${done?'':`<button class="btn btn-sm btn-primary" onclick="openDeposit('${g.id}','${esc(g.title)}',${g.target_amount-g.current_amount})">➕ ${lang==='ar'?'ادّخر':'save'}</button>`}
+      </div>
+      <div style="height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:99px"></div>
+      </div></div>`;
+  }).join(''):`<div class="row" style="justify-content:center;color:#64748B">${lang==='ar'?'لا أهداف بعد':'no goals yet'}</div>`;
+}
+
+// child requests a purchase
+async function reqPurchase(itemId,title){
+  const c=state.child;if(!c)return;
+  try{
+    await KC.childRequestPurchase(c.family_id,c.child_id,itemId);
+    toast(lang==='ar'?'✅ أُرسل طلبك لوالدك':'✅ Sent to your parent');
+  }catch(e){ toast('⚠️ '+e.message); }
+}
+// child deposits into a goal (simple prompt-based amount)
+function openDeposit(goalId,title,remaining){
+  const c=state.child;if(!c)return;
+  const max=Math.min(c.balance,remaining);
+  const amtStr=prompt((lang==='ar'?'كم تريد أن تدّخر لـ ':'How much to save for ')+title+'؟ (1-'+max+')');
+  if(amtStr==null)return;
+  const amt=parseInt(amtStr)||0;
+  if(amt<=0||amt>max){ toast(lang==='ar'?'مبلغ غير صحيح':'invalid amount'); return; }
+  doDeposit(goalId,amt);
+}
+async function doDeposit(goalId,amt){
+  try{
+    await KC.depositGoal(goalId,amt);
+    toast(lang==='ar'?'🎯 تم الادخار!':'🎯 Saved!');
+    await refreshChild(); renderChild();
+  }catch(e){ toast('⚠️ '+e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  Common
+// ══════════════════════════════════════════════════════
+function copyCode(){
+  const code=state.family?state.family.family_code:'';
+  if(navigator.clipboard&&code){navigator.clipboard.writeText(code).then(()=>toast(t('copied')));}
+}
+async function doLogout(){
+  try{ KC.childLogout(); await KC.signOut(); }catch(_){}
+  location.replace('auth.html');
+}
+</script>
+</body>
+</html>
