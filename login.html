@@ -6,99 +6,126 @@
 <meta name="theme-color" content="#0D1B2A">
 <title>KidCoins — تسجيل الدخول</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#060612;--card:#0d0d22;--card2:#141430;--border:#1e1e48;--teal:#00C4B6;--teal2:#00A89C;
-  --gold:#F5C518;--navy:#0D1B2A;--text:#eeeeff;--muted:#8888cc;--red:#ff3355;--green:#00e5a0}
-body{font-family:'Cairo',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:20px;color:var(--text);position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 70% 55% at 20% 0%,rgba(0,196,182,.14),transparent),
-             radial-gradient(ellipse 60% 50% at 90% 100%,rgba(245,197,24,.09),transparent),var(--bg)}
-/* floating coins backdrop, same spirit as the landing */
-.bgcoin{position:fixed;font-size:2rem;opacity:.06;pointer-events:none;user-select:none;animation:float 7s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(12deg)}}
+:root{
+  --teal:#00C4B6;--teal2:#00A89C;--navy:#0D1B2A;--navy2:#0A1520;--navy3:#111F30;
+  --gold:#F5C518;--gold2:#E0A800;--slate:#64748B;--red:#FF3355;--green:#22C55E;
+  --border:rgba(255,255,255,.07);--card:rgba(255,255,255,.04);--text:#fff
+}
+body{font-family:'Cairo',sans-serif;background:var(--navy);color:#fff;min-height:100vh;
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  display:flex;flex-direction:column;position:relative}
+/* subtle brand glows, in the landing's palette */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(0,196,182,.10),transparent),
+             radial-gradient(ellipse 50% 40% at 90% 100%,rgba(245,197,24,.07),transparent)}
+.bgcoin{position:fixed;font-size:1.8rem;opacity:.05;pointer-events:none;user-select:none;z-index:0;
+  animation:float 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(10deg)}}
 
-.back{position:fixed;top:16px;right:16px;display:flex;align-items:center;gap:7px;padding:9px 15px;
-  background:rgba(20,20,48,.7);border:1px solid var(--border);border-radius:99px;color:var(--muted);
-  font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;text-decoration:none;
-  backdrop-filter:blur(8px);transition:.2s}
-.back:hover{color:var(--text);border-color:var(--teal)}
-
-.brand{text-align:center;margin-bottom:22px}
-.brand .icon{font-size:2.7rem;filter:drop-shadow(0 4px 14px rgba(0,196,182,.4));margin-bottom:6px}
-.brand .name{font-weight:900;font-size:1.7rem;letter-spacing:-.5px}
+/* top bar — mirrors the landing nav */
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;background:rgba(13,27,42,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .icon{font-size:1.7rem;filter:drop-shadow(0 3px 8px rgba(0,196,182,.3))}
+.brand .name{font-weight:900;font-size:1.05rem;letter-spacing:-.3px}
 .brand .name span{color:var(--gold)}
-.brand .lego{font-family:'Poppins',sans-serif;font-size:.6rem;color:var(--teal);letter-spacing:3px;
-  font-weight:700;direction:ltr;margin-top:2px}
-.brand .ar{font-size:.85rem;color:var(--muted);margin-top:8px;font-weight:600}
+.brand .lego{font-family:'Poppins',sans-serif;font-size:.5rem;color:var(--teal);letter-spacing:2.5px;
+  font-weight:700;direction:ltr;text-align:left;margin-top:1px}
+.back{display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:99px;border:1px solid var(--border);
+  background:var(--card);color:#cbd5e1;font-family:inherit;font-weight:800;font-size:.8rem;cursor:pointer;
+  text-decoration:none;transition:all .2s}
+.back:hover{border-color:var(--teal);color:#fff}
 
-.box{width:100%;max-width:400px;background:linear-gradient(160deg,var(--card2),var(--card));
-  border:1px solid var(--border);border-radius:24px;padding:28px 24px;
-  box-shadow:0 24px 60px rgba(0,0,0,.55);position:relative;z-index:2}
-.tabs{display:flex;background:var(--bg);border-radius:14px;padding:5px;margin-bottom:18px;gap:5px}
-.tab{flex:1;padding:11px;border:none;background:transparent;color:var(--muted);font-family:inherit;
-  font-weight:800;font-size:.9rem;border-radius:10px;cursor:pointer;transition:.2s}
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px 20px;position:relative;z-index:1}
+.hero{text-align:center;margin-bottom:22px}
+.hero .big{font-size:2.6rem;margin-bottom:8px;filter:drop-shadow(0 6px 18px rgba(0,196,182,.35))}
+.hero h1{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:.85rem;color:var(--slate);margin-top:6px;font-weight:600}
+
+.card{width:100%;max-width:400px;background:var(--navy3);border:1px solid var(--border);
+  border-radius:22px;padding:26px 22px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.tabs{display:flex;background:var(--navy2);border-radius:99px;padding:5px;margin-bottom:16px;gap:4px}
+.tab{flex:1;padding:11px;border:none;background:transparent;color:var(--slate);font-family:inherit;
+  font-weight:900;font-size:.88rem;border-radius:99px;cursor:pointer;transition:.2s}
 .tab.on{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--navy);
-  box-shadow:0 6px 16px rgba(0,196,182,.3)}
-.tagline{text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:18px;min-height:1.2em;font-weight:600}
-label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin:14px 0 6px}
-input{width:100%;padding:13px 15px;background:var(--bg);border:1.5px solid var(--border);
-  border-radius:12px;color:var(--text);font-family:inherit;font-size:.95rem;transition:.2s}
+  box-shadow:0 4px 18px rgba(0,196,182,.35)}
+.tagline{text-align:center;font-size:.82rem;color:var(--slate);margin-bottom:16px;min-height:1.2em;font-weight:600}
+label{display:block;font-size:.76rem;font-weight:700;color:var(--slate);margin:14px 0 6px}
+input{width:100%;padding:13px 15px;background:var(--navy2);border:1px solid var(--border);
+  border-radius:12px;color:#fff;font-family:inherit;font-size:.95rem;transition:.2s}
 input.ltr{direction:ltr;text-align:left}
-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,196,182,.12)}
-.btn{width:100%;padding:15px;margin-top:22px;border:none;border-radius:14px;
+input::placeholder{color:#3f4d63}
+input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,196,182,.13)}
+.btn{width:100%;padding:15px;margin-top:22px;border:none;border-radius:99px;
+  font-family:'Cairo','Poppins',sans-serif;font-weight:900;font-size:1.02rem;cursor:pointer;transition:.2s;
   background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--navy);
-  font-family:inherit;font-weight:900;font-size:1.02rem;cursor:pointer;transition:.2s;
-  box-shadow:0 10px 26px rgba(0,196,182,.28)}
+  box-shadow:0 6px 22px rgba(0,196,182,.32)}
 .btn:active{transform:scale(.98)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
-.msg{margin-top:16px;padding:12px;border-radius:12px;font-size:.82rem;font-weight:600;text-align:center;display:none}
+.msg{margin-top:15px;padding:12px;border-radius:12px;font-size:.82rem;font-weight:600;text-align:center;display:none}
 .msg.err{display:block;background:rgba(255,51,85,.12);color:#ff8095;border:1px solid rgba(255,51,85,.3)}
-.msg.ok{display:block;background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.3)}
-.hint{text-align:center;font-size:.74rem;color:var(--muted);margin-top:18px;line-height:1.7}
+.msg.ok{display:block;background:rgba(34,197,94,.12);color:#5ee9a0;border:1px solid rgba(34,197,94,.3)}
+.hint{text-align:center;font-size:.74rem;color:var(--slate);margin-top:16px;line-height:1.7}
 .link{color:var(--teal);cursor:pointer;font-weight:700}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(13,27,42,.3);
   border-top-color:var(--navy);border-radius:50%;animation:s .7s linear infinite;vertical-align:middle}
 @keyframes s{to{transform:rotate(360deg)}}
+.foot{text-align:center;font-size:.68rem;color:var(--slate);padding:16px;position:relative;z-index:1}
 </style>
 </head>
 <body>
-<span class="bgcoin" style="top:12%;left:8%">🪙</span>
-<span class="bgcoin" style="top:22%;right:10%;animation-delay:1.5s">⭐</span>
-<span class="bgcoin" style="bottom:16%;left:14%;animation-delay:3s">💰</span>
-<span class="bgcoin" style="bottom:24%;right:12%;animation-delay:2s">🪙</span>
+<span class="bgcoin" style="top:16%;left:8%">🪙</span>
+<span class="bgcoin" style="top:26%;right:9%;animation-delay:1.5s">⭐</span>
+<span class="bgcoin" style="bottom:18%;left:13%;animation-delay:3s">💰</span>
+<span class="bgcoin" style="bottom:28%;right:11%;animation-delay:2s">🪙</span>
 
-<a class="back" href="index.html">→ العودة للرئيسية</a>
-
-<div class="brand">
-  <div class="icon">🏦</div>
-  <div class="name">Kid<span>Coins</span></div>
-  <div class="lego">LEARN · EARN · GROW</div>
-  <div class="ar">بنك العائلة الذكي</div>
+<div class="topbar">
+  <div class="brand">
+    <span class="icon">🏦</span>
+    <div>
+      <div class="name">Kid<span>Coins</span></div>
+      <div class="lego">LEARN · EARN · GROW</div>
+    </div>
+  </div>
+  <a class="back" href="index.html">→ العودة للموقع</a>
 </div>
 
-<div class="box">
-  <div class="tabs">
-    <button class="tab on" id="tab-login" onclick="mode('login')">تسجيل الدخول</button>
-    <button class="tab" id="tab-signup" onclick="mode('signup')">حساب جديد</button>
+<div class="wrap">
+  <div class="hero">
+    <div class="big">🏦</div>
+    <h1>بنك <span>العائلة</span></h1>
+    <p>حساب عائلتك — آمن ومعزول</p>
   </div>
-  <div class="tagline" id="tagline">أهلاً بعودتك — سجّل دخول عائلتك</div>
 
-  <div id="signup-name-wrap" style="display:none">
-    <label>اسم العائلة</label>
-    <input id="famname" type="text" placeholder="عائلة العيدروس">
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" id="tab-login" onclick="mode('login')">تسجيل الدخول</button>
+      <button class="tab" id="tab-signup" onclick="mode('signup')">تجربة مجانية</button>
+    </div>
+    <div class="tagline" id="tagline">أهلاً بعودتك — سجّل دخول عائلتك</div>
+
+    <div id="signup-name-wrap" style="display:none">
+      <label>اسم العائلة</label>
+      <input id="famname" type="text" placeholder="عائلة العيدروس">
+    </div>
+    <label>البريد الإلكتروني</label>
+    <input id="email" class="ltr" type="email" placeholder="you@example.com" autocomplete="email">
+    <label>كلمة المرور</label>
+    <input id="pass" class="ltr" type="password" placeholder="••••••••" autocomplete="current-password">
+
+    <button class="btn" id="go" onclick="submit()">دخول</button>
+    <div class="msg" id="msg"></div>
+    <div class="hint" id="hint">نسيت كلمة المرور؟ <span class="link" onclick="reset()">إعادة تعيين</span></div>
   </div>
-  <label>البريد الإلكتروني</label>
-  <input id="email" class="ltr" type="email" placeholder="you@example.com" autocomplete="email">
-  <label>كلمة المرور</label>
-  <input id="pass" class="ltr" type="password" placeholder="••••••••" autocomplete="current-password">
-
-  <button class="btn" id="go" onclick="submit()">دخول</button>
-  <div class="msg" id="msg"></div>
-
-  <div class="hint" id="hint">نسيت كلمة المرور؟ <span class="link" onclick="reset()">إعادة تعيين</span></div>
 </div>
+
+<div class="foot">© 2026 KidCoins · بنك العائلة الذكي</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -153,9 +180,7 @@ async function reset(){
   if(r.error) show(r.error.message); else show('أرسلنا رابط إعادة التعيين إلى بريدك ✅',true);
 }
 el('pass').addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
-// deep link: ابدأ مجاناً -> signup tab
 if(/signup|register/i.test(location.search)) mode('signup');
-// already signed in -> go straight to the app
 sb.auth.getSession().then(function(r){ if(r.data.session) location.replace(APP); });
 </script>
 </body>
