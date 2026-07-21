@@ -988,111 +988,135 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 </div>
 
 
-<!-- ☁️ KidCoins Cloud Storage Layer v5 (clean-fetch) sync, no localStorage override) -->
+<!-- ☁️ KidCoins Cloud Storage Layer v6 (authenticated, per-account isolation) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   var URL_='https://ecuqkmvhrkulebmwmwan.supabase.co';
   var KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdXFrbXZocmt1bGVibXdtd2FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NzcwNTUsImV4cCI6MjEwMDE1MzA1NX0.0gdBC9JVCa_sQXpH4A4J4Ym2VrjtooZWWCR43ZZF4tg';
+  var REF='ecuqkmvhrkulebmwmwan';
+  var LOGIN='login.html';
   var PREFIX='v20_';
-  var snap={};                 // last value we believe is in the cloud, per key
-  // Obtain a pristine fetch (the host page wrapped window.fetch in a way that breaks Headers cloning)
+
+  // pristine fetch (host page may wrap window.fetch in a way that breaks Headers cloning)
   var cleanFetch=null;
-  try{
-    var ifr=document.createElement('iframe'); ifr.style.display='none';
-    document.documentElement.appendChild(ifr);
-    cleanFetch=ifr.contentWindow.fetch.bind(ifr.contentWindow);
-    // keep the iframe attached so the fetch stays valid
-    window.__kcIframe=ifr;
-  }catch(e){ console.warn('[KC cloud] could not get clean fetch',e); }
+  try{ var ifr=document.createElement('iframe'); ifr.style.display='none';
+       document.documentElement.appendChild(ifr);
+       cleanFetch=ifr.contentWindow.fetch.bind(ifr.contentWindow); window.__kcIframe=ifr; }catch(e){}
+
   var sb=null;
-  try{ if(window.supabase) sb=window.supabase.createClient(URL_,KEY_,{auth:{persistSession:false},global: (cleanFetch?{fetch:cleanFetch}:{}) }); }
-  catch(e){ console.warn('[KC cloud] client init failed',e); }
+  try{ sb=window.supabase.createClient(URL_,KEY_,{auth:{persistSession:true,autoRefreshToken:true},
+       global:(cleanFetch?{fetch:cleanFetch}:{})}); }catch(e){ console.warn('[KC] client init',e); }
 
-  function toStr(v){ return v===null? null : JSON.stringify(v); }
+  // ---- read the persisted session synchronously (before the app boots) ----
+  function readSession(){
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(k && k.indexOf('sb-')===0 && k.indexOf('-auth-token')>0){
+          var raw=localStorage.getItem(k); if(!raw) continue;
+          var o=JSON.parse(raw);
+          var s=o&&o.access_token?o:(o&&o.currentSession?o.currentSession:null);
+          if(s&&s.access_token&&s.user&&s.user.id) return s;
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+  var sess=readSession();
+  if(!sess){ location.replace(LOGIN); return; }      // not logged in -> gate
+  var UID=sess.user.id, TOKEN=sess.access_token;
 
-  // ---- 1) FAST preload (sync) so data is present before the app boots ----
+  // ---- clean account switch: wipe app keys if a different account logs in here ----
+  try{
+    if(localStorage.getItem('kc_last_uid')!==UID){
+      for(var j=localStorage.length-1;j>=0;j--){ var kk=localStorage.key(j);
+        if(kk&&kk.indexOf(PREFIX)===0) localStorage.removeItem(kk); }
+      localStorage.setItem('kc_last_uid',UID);
+    }
+  }catch(e){}
+
+  var snap={}, pulled=false;
+  function toStr(v){ return v===null?null:JSON.stringify(v); }
+
+  // ---- fast preload (sync) scoped to THIS account via the session token ----
   try{
     var xhr=new XMLHttpRequest();
     xhr.open('GET', URL_+'/rest/v1/family_state?select=family_key,value', false);
-    xhr.setRequestHeader('apikey',KEY_); xhr.setRequestHeader('Authorization','Bearer '+KEY_);
+    xhr.setRequestHeader('apikey',KEY_); xhr.setRequestHeader('Authorization','Bearer '+TOKEN);
     xhr.send(null);
-    if(xhr.status>=200 && xhr.status<300){
+    if(xhr.status>=200&&xhr.status<300){
       JSON.parse(xhr.responseText||'[]').forEach(function(r){
-        var s=toStr(r.value);
-        if(s!==null){ try{ localStorage.setItem(r.family_key,s); }catch(_){ } }
-        snap[r.family_key]=s;
+        var s=toStr(r.value); if(s!==null){ try{localStorage.setItem(r.family_key,s);}catch(_){} } snap[r.family_key]=s;
       });
+      pulled=true;
     }
-  }catch(e){ /* covered by async catch-up below */ }
+  }catch(e){}
 
-  // ---- 2) ASYNC catch-up read via supabase-js (reliable; re-renders if needed) ----
+  // ---- async catch-up read via supabase-js (RLS-scoped, refreshes token) ----
   function pull(cb){
-    if(!sb) return cb&&cb();
+    if(!sb){ pulled=true; return cb&&cb(); }
     sb.from('family_state').select('family_key,value').then(function(res){
-      if(res.error){ console.warn('[KC cloud] pull error',res.error); return cb&&cb(); }
+      if(res.error){ console.warn('[KC] pull',res.error.message||res.error); pulled=true; return cb&&cb(); }
       var changed=false;
-      (res.data||[]).forEach(function(r){
-        var s=toStr(r.value);
-        if(snap[r.family_key]!==s){
-          if(s===null){ try{localStorage.removeItem(r.family_key);}catch(_){} }
-          else { try{localStorage.setItem(r.family_key,s);}catch(_){} }
-          snap[r.family_key]=s; changed=true;
-        }
-      });
+      (res.data||[]).forEach(function(r){ var s=toStr(r.value);
+        if(snap[r.family_key]!==s){ if(s===null){try{localStorage.removeItem(r.family_key);}catch(_){}}
+          else{try{localStorage.setItem(r.family_key,s);}catch(_){}} snap[r.family_key]=s; changed=true; } });
+      pulled=true;
       if(changed){ try{ if(typeof window.__kcRerender==='function') window.__kcRerender(); }catch(_){} }
       cb&&cb();
     });
   }
 
-  // ---- 3) PUSH changed local v20_ keys -> cloud via supabase-js upsert ----
+  // ---- push local v20_ changes -> cloud, tagged with owner_id (RLS enforces isolation) ----
   function push(){
-    if(!sb) return;
+    if(!sb||!pulled) return;      // never push a transient seed before we know cloud state
     var rows=[], seen={};
     try{
-      for(var i=0;i<localStorage.length;i++){
-        var k=localStorage.key(i); if(!k||k.indexOf(PREFIX)!==0) continue;
+      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(!k||k.indexOf(PREFIX)!==0) continue;
         seen[k]=1; var v=localStorage.getItem(k);
-        if(snap[k]!==v){
-          var fid=(/^v20_([^_]+)_/.exec(k)||[])[1]||null;
-          var val=null; try{ val=(v===null?null:JSON.parse(v)); }catch(_){ val=v; }
-          rows.push({family_key:k, family_id:fid, value:val, updated_at:new Date().toISOString()});
-          snap[k]=v;
-        }
-      }
-      Object.keys(snap).forEach(function(k){
-        if(k.indexOf(PREFIX)===0 && !seen[k] && snap[k]!==null){
-          rows.push({family_key:k, family_id:(/^v20_([^_]+)_/.exec(k)||[])[1]||null, value:null, updated_at:new Date().toISOString()});
-          snap[k]=null;
-        }
-      });
-    }catch(e){ console.warn('[KC cloud] scan failed',e); return; }
-    if(rows.length){
-      sb.from('family_state').upsert(rows,{onConflict:'family_key'}).then(function(res){
-        if(res.error) console.warn('[KC cloud] push error',res.error);
-      });
-    }
+        if(snap[k]!==v){ var fid=(/^v20_([^_]+)_/.exec(k)||[])[1]||null;
+          var val=null; try{val=(v===null?null:JSON.parse(v));}catch(_){val=v;}
+          rows.push({owner_id:UID,family_key:k,family_id:fid,value:val,updated_at:new Date().toISOString()}); snap[k]=v; } }
+      Object.keys(snap).forEach(function(k){ if(k.indexOf(PREFIX)===0&&!seen[k]&&snap[k]!==null){
+        rows.push({owner_id:UID,family_key:k,family_id:(/^v20_([^_]+)_/.exec(k)||[])[1]||null,value:null,updated_at:new Date().toISOString()}); snap[k]=null; } });
+    }catch(e){ return; }
+    if(rows.length){ sb.from('family_state').upsert(rows,{onConflict:'owner_id,family_key'}).then(function(res){
+      if(res.error) console.warn('[KC] push',res.error.message||res.error); }); }
   }
-  setInterval(push, 2000);
-  document.addEventListener('visibilitychange', function(){ if(document.hidden) push(); });
-  window.addEventListener('pagehide', push);
+  setInterval(push,2000);
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) push(); });
+  window.addEventListener('pagehide',push);
 
-  // ---- 4) REALTIME: remote change -> local + re-render ----
-  try{
-    if(sb){
-      sb.channel('kc_fs').on('postgres_changes',{event:'*',schema:'public',table:'family_state'},function(p){
+  // ---- realtime for this account only ----
+  try{ if(sb){ sb.channel('kc_fs').on('postgres_changes',
+      {event:'*',schema:'public',table:'family_state',filter:'owner_id=eq.'+UID},function(p){
         var row=p.new||p.old; if(!row||!row.family_key) return;
-        var s=(p.eventType==='DELETE'||row.value==null)?null:JSON.stringify(row.value);
-        snap[row.family_key]=s;
+        var s=(p.eventType==='DELETE'||row.value==null)?null:JSON.stringify(row.value); snap[row.family_key]=s;
         try{ if(s===null) localStorage.removeItem(row.family_key); else localStorage.setItem(row.family_key,s); }catch(_){}
         try{ if(typeof window.__kcRerender==='function') window.__kcRerender(); }catch(_){}
-      }).subscribe();
-    }
-  }catch(e){ console.warn('[KC cloud] realtime off',e); }
+      }).subscribe(); } }catch(e){}
 
-  // Kick an async pull shortly after boot to reconcile anything the sync read missed,
-  // then an immediate push so local-only data reaches the cloud right away.
-  setTimeout(function(){ pull(function(){ push(); }); }, 800);
+  // ---- sign out of the family account ----
+  window.kcSignOut=function(){
+    try{ for(var j=localStorage.length-1;j>=0;j--){ var kk=localStorage.key(j);
+      if(kk&&kk.indexOf(PREFIX)===0) localStorage.removeItem(kk); } localStorage.removeItem('kc_last_uid'); }catch(_){}
+    var done=function(){ location.replace(LOGIN); };
+    try{ sb?sb.auth.signOut().then(done,done):done(); }catch(_){ done(); }
+  };
+  // small discreet account sign-out control
+  document.addEventListener('DOMContentLoaded',function(){
+    try{ var b=document.createElement('button'); b.textContent='🔓';
+      b.title='خروج من حساب العائلة'; b.onclick=window.kcSignOut;
+      b.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;width:34px;height:34px;border-radius:50%;'
+        +'border:1px solid rgba(255,255,255,.15);background:rgba(13,27,42,.6);color:#8888cc;font-size:14px;'
+        +'cursor:pointer;backdrop-filter:blur(6px)';
+      document.body.appendChild(b);
+    }catch(_){}
+  });
+
+  // reconcile shortly after boot, then push
+  setTimeout(function(){ pull(function(){ push(); }); }, 600);
 })();
 </script>
 <script>
