@@ -988,176 +988,9 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 </div>
 
 
-<!-- ☁️ KidCoins Cloud Storage Layer v7 (parent + child sessions, per-account isolation) -->
+<!-- ☁️ KidCoins Cloud Layer (served from Supabase — updatable without re-upload) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(function(){
-  var URL_='https://ecuqkmvhrkulebmwmwan.supabase.co';
-  var KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdXFrbXZocmt1bGVibXdtd2FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NzcwNTUsImV4cCI6MjEwMDE1MzA1NX0.0gdBC9JVCa_sQXpH4A4J4Ym2VrjtooZWWCR43ZZF4tg';
-  var LOGIN='login.html';
-  var PREFIX='v20_';
-  var cleanFetch=null;
-  try{ var ifr=document.createElement('iframe'); ifr.style.display='none';
-       document.documentElement.appendChild(ifr);
-       cleanFetch=ifr.contentWindow.fetch.bind(ifr.contentWindow); window.__kcIframe=ifr; }catch(e){}
-  var sb=null;
-  try{ sb=window.supabase.createClient(URL_,KEY_,{auth:{persistSession:true,autoRefreshToken:true},
-       global:(cleanFetch?{fetch:cleanFetch}:{})}); }catch(e){}
-
-  function readSession(){
-    try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
-      if(k&&k.indexOf('sb-')===0&&k.indexOf('-auth-token')>0){ var o=JSON.parse(localStorage.getItem(k)||'null');
-        var s=o&&o.access_token?o:(o&&o.currentSession?o.currentSession:null);
-        if(s&&s.access_token&&s.user) return s; } } }catch(e){} return null;
-  }
-  var sess=readSession();
-  var childSess=null; try{ childSess=JSON.parse(localStorage.getItem('kc_child_session')||'null'); }catch(e){}
-
-  var MODE, OWNER, CHILD_KEY=null, TOKEN=null;
-  if(sess) TOKEN=sess.access_token;
-  var isAnon = sess && sess.user && (sess.user.is_anonymous===true);
-  if(childSess && sess && isAnon){                 // CHILD session
-    MODE='child'; OWNER=childSess.owner_id; CHILD_KEY=childSess.child_key;
-  } else if(sess && !isAnon){                       // PARENT session
-    MODE='parent'; OWNER=sess.user.id;
-    try{ localStorage.removeItem('kc_child_session'); }catch(_){}
-  } else {                                          // not logged in
-    location.replace(LOGIN); return;
-  }
-
-  // clean switch: wipe app keys if the family owner changed on this device
-  try{ if(localStorage.getItem('kc_last_owner')!==OWNER){
-    for(var j=localStorage.length-1;j>=0;j--){ var kk=localStorage.key(j);
-      if(kk&&kk.indexOf(PREFIX)===0) localStorage.removeItem(kk); }
-    localStorage.setItem('kc_last_owner',OWNER);
-  } }catch(e){}
-
-  var snap={}, pulled=false;
-  function toStr(v){ return v===null?null:JSON.stringify(v); }
-
-  // preload (sync) — RLS returns only this family's rows (owner=OWNER, via owner or member)
-  try{
-    var xhr=new XMLHttpRequest();
-    xhr.open('GET', URL_+'/rest/v1/family_state?select=family_key,value', false);
-    xhr.setRequestHeader('apikey',KEY_); xhr.setRequestHeader('Authorization','Bearer '+TOKEN);
-    xhr.send(null);
-    if(xhr.status>=200&&xhr.status<300){
-      JSON.parse(xhr.responseText||'[]').forEach(function(r){ var s=toStr(r.value);
-        if(s!==null){ try{localStorage.setItem(r.family_key,s);}catch(_){} } snap[r.family_key]=s; });
-      pulled=true;
-    }
-  }catch(e){}
-
-  function pull(cb){
-    if(!sb){ pulled=true; return cb&&cb(); }
-    sb.from('family_state').select('family_key,value').then(function(res){
-      if(res.error){ pulled=true; return cb&&cb(); }
-      var changed=false;
-      (res.data||[]).forEach(function(r){ var s=toStr(r.value);
-        if(snap[r.family_key]!==s){ if(s===null){try{localStorage.removeItem(r.family_key);}catch(_){}}
-          else{try{localStorage.setItem(r.family_key,s);}catch(_){}} snap[r.family_key]=s; changed=true; } });
-      pulled=true;
-      if(changed){ try{ if(typeof window.__kcRerender==='function') window.__kcRerender(); }catch(_){} }
-      cb&&cb();
-    });
-  }
-  function push(){
-    if(!sb||!pulled) return;
-    var rows=[], seen={};
-    try{
-      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(!k||k.indexOf(PREFIX)!==0) continue;
-        seen[k]=1; var v=localStorage.getItem(k);
-        if(snap[k]!==v){ var fid=(/^v20_([^_]+)_/.exec(k)||[])[1]||null;
-          var val=null; try{val=(v===null?null:JSON.parse(v));}catch(_){val=v;}
-          rows.push({owner_id:OWNER,family_key:k,family_id:fid,value:val,updated_at:new Date().toISOString()}); snap[k]=v; } }
-      Object.keys(snap).forEach(function(k){ if(k.indexOf(PREFIX)===0&&!seen[k]&&snap[k]!==null){
-        rows.push({owner_id:OWNER,family_key:k,family_id:(/^v20_([^_]+)_/.exec(k)||[])[1]||null,value:null,updated_at:new Date().toISOString()}); snap[k]=null; } });
-    }catch(e){ return; }
-    if(rows.length){ sb.from('family_state').upsert(rows,{onConflict:'owner_id,family_key'}).then(function(res){}); }
-    if(MODE==='parent') syncChildren();
-  }
-  setInterval(push,2000);
-  document.addEventListener('visibilitychange',function(){ if(document.hidden) push(); });
-  window.addEventListener('pagehide',push);
-
-  try{ if(sb){ sb.channel('kc_fs').on('postgres_changes',
-    {event:'*',schema:'public',table:'family_state',filter:'owner_id=eq.'+OWNER},function(p){
-      var row=p.new||p.old; if(!row||!row.family_key) return;
-      var s=(p.eventType==='DELETE'||row.value==null)?null:JSON.stringify(row.value); snap[row.family_key]=s;
-      try{ if(s===null) localStorage.removeItem(row.family_key); else localStorage.setItem(row.family_key,s); }catch(_){}
-      try{ if(typeof window.__kcRerender==='function') window.__kcRerender(); }catch(_){}
-    }).subscribe(); } }catch(e){}
-
-  // ===== PARENT: register children for cloud login + expose family code =====
-  var childSnap={}, famCode=null;
-  function syncChildren(){
-    if(MODE!=='parent'||!sb) return;
-    try{
-      var fid=null;
-      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
-        var m=/^v20_([^_]+)_children$/.exec(k); if(m){ fid=m[1]; break; } }
-      if(!fid) return;
-      var children=JSON.parse(localStorage.getItem('v20_'+fid+'_children')||'[]');
-      var cpins=JSON.parse(localStorage.getItem('v20_'+fid+'_cpins')||'{}');
-      children.forEach(function(c){
-        var pin=cpins[c.id]; if(!pin) return;
-        var sig=c.id+'|'+c.name+'|'+pin;
-        if(childSnap[c.id]===sig) return;                 // unchanged
-        childSnap[c.id]=sig;
-        sb.rpc('parent_set_child',{p_child_key:c.id,p_name:c.name,p_pin:String(pin),p_family_id:fid})
-          .then(function(res){ if(!res.error && res.data){ famCode=res.data; showFamCode(); } });
-      });
-    }catch(e){}
-  }
-  function showFamCode(){
-    if(!famCode) return;
-    var b=document.getElementById('kc-famcode');
-    if(!b){ b=document.createElement('div'); b.id='kc-famcode';
-      b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99998;'
-        +'background:rgba(13,27,42,.9);border:1px solid rgba(245,197,24,.4);color:#F5C518;'
-        +'font-family:Cairo,sans-serif;font-weight:800;font-size:.7rem;padding:5px 12px;border-radius:99px;'
-        +'backdrop-filter:blur(8px);cursor:pointer';
-      b.title='رمز العائلة لدخول الأبناء — اضغط للنسخ';
-      b.onclick=function(){ try{navigator.clipboard.writeText(famCode);}catch(_){}
-        b.textContent='✅ نُسخ: '+famCode; setTimeout(function(){b.textContent='👨‍👩‍👧 رمز العائلة: '+famCode;},1200); };
-      document.body.appendChild(b);
-    }
-    b.textContent='👨‍👩‍👧 رمز العائلة: '+famCode;
-  }
-
-  // ===== sign out (both parent and child) =====
-  window.kcSignOut=function(){
-    try{ for(var j=localStorage.length-1;j>=0;j--){ var kk=localStorage.key(j);
-      if(kk&&kk.indexOf(PREFIX)===0) localStorage.removeItem(kk); }
-      localStorage.removeItem('kc_last_owner'); localStorage.removeItem('kc_child_session'); }catch(_){}
-    var done=function(){ location.replace(LOGIN); };
-    try{ sb?sb.auth.signOut().then(done,done):done(); }catch(_){ done(); }
-  };
-  document.addEventListener('DOMContentLoaded',function(){
-    try{ var b=document.createElement('button'); b.textContent='🔓'; b.title='خروج';
-      b.onclick=window.kcSignOut;
-      b.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;width:34px;height:34px;border-radius:50%;'
-        +'border:1px solid rgba(255,255,255,.15);background:rgba(13,27,42,.6);color:#8888cc;font-size:14px;cursor:pointer;backdrop-filter:blur(6px)';
-      document.body.appendChild(b);
-    }catch(_){}
-  });
-
-  // reconcile then push; PARENT syncs children; CHILD auto-enters own view
-  setTimeout(function(){ pull(function(){
-    push();
-    if(MODE==='parent'){ syncChildren();
-      if(sb) sb.rpc('parent_family_code',{}).then(function(r){ if(!r.error&&r.data){famCode=r.data;showFamCode();} });
-    }
-    if(MODE==='child' && CHILD_KEY){
-      var tries=0;
-      (function enter(){ tries++;
-        if(typeof window.__kcEnterAs==='function'){ window.__kcEnterAs(CHILD_KEY); return; }
-        if(tries<40) setTimeout(enter,150);
-      })();
-    }
-  }); }, 500);
-})();
-</script>
+<script src="https://ecuqkmvhrkulebmwmwan.supabase.co/functions/v1/kc-cloud"></script>
 <script>
 // ═══════════════════════════════════════════════════
 // ICON LIBRARY
@@ -1408,8 +1241,8 @@ fss('bal',balances);
 children.forEach(c=>{if(!childPins[c.id])childPins[c.id]='0000';if(balances[c.id]===undefined)balances[c.id]=0;});
 
 let currentUser=null,currentWeek=0,pinInput='',pinTarget=null;
-// KidCoins: enter a member's view directly (used after cloud child-login)
-window.__kcEnterAs=function(w){try{currentUser=w;var es=document.getElementById('entry-screen');if(es)es.classList.add('hide');var ms=document.getElementById('member-screen');if(ms)ms.classList.remove('show');openApp();}catch(e){console.warn('kcEnterAs',e);}};
+// KidCoins: enter a member's view directly (stable hook used by the cloud layer)
+window.__kcEnterAs=function(w){try{currentUser=w;var es=document.getElementById('entry-screen');if(es)es.classList.add('hide');var ms=document.getElementById('member-screen');if(ms)ms.classList.remove('show');var po=document.getElementById('pin-overlay');if(po)po.classList.remove('show');openApp();}catch(e){console.warn('kcEnterAs',e);}};
 
 const _tapMap={};
 
